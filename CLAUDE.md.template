@@ -1,0 +1,141 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Task & Handover Workflow (MANDATORY)
+
+Every Claude Code session MUST follow this workflow. This is not optional.
+
+### On Session Start
+
+1. **Generate a session ID** by running:
+   ```bash
+   AUTHOR_HASH=$( { git config user.name 2>/dev/null; git config user.email 2>/dev/null; } \
+     | tr -d '\n' | shasum -a 256 | head -c 8 || echo "anon0000" ) \
+     && echo "SESSION: ${AUTHOR_HASH}-$(date -u +%Y%m%dT%H%M%SZ)"
+   ```
+   Store the session ID (e.g. `a1b2c3d4-20260414T140000Z`) and use it to tag all session log entries and handovers. The author hash is a stable pseudonymous fingerprint — unique per contributor but not reversible to their identity. If `git config user.email` is unset, the fallback `anon0000` is used; warn the user once if this happens.
+
+2. **Read active tasks** at both tiers:
+   - Project-wide: `ls .dev/tasks/active/`
+   - Per-epic: `ls .dev/epics/*/tasks/active/ 2>/dev/null`
+   - If any exist, read them to understand current work.
+
+3. **Read recent handovers**: `ls -t .dev/handover/ 2>/dev/null | head -3` — read the latest to understand where things left off.
+
+4. **Match the user's request to a task**:
+   - If the request matches an active/backlog task → pick it up, tell the user which task, and start working.
+   - If NO task matches → **stop and create one first** (see below).
+
+### When No Task Exists for the Request
+
+Do NOT start coding immediately. Instead:
+
+1. **Tell the user** you're creating a task first:
+   > "There's no task file for this yet. Let me draft one so we have a clear scope before I start."
+2. **Create the task file** in `.dev/tasks/active/<slug>.md` (or `.dev/epics/<slug>/tasks/active/...` if it belongs to an existing epic) using the template at `.dev/TASK_TEMPLATE.md`:
+   - Fill in: Goal, Context (ask the user if unclear), Relevant Files (explore the codebase), Acceptance Criteria
+   - Set Status to `active`, Created to today's date, Owner to your session author-hash.
+3. **Show the task to the user** for review — read it back or summarize the key sections.
+4. **Wait for confirmation** before starting implementation.
+5. Once confirmed, begin work and log progress in the task's Session Log.
+
+### During Work
+
+- Update the task file's **Session Log** as you make progress (after completing a meaningful chunk, not after every line).
+- If you discover new context, blockers, or change approach — note it in the Session Log.
+- Always tag Session Log entries with the session ID (see format below).
+
+### On Session End (user says "wrap up", "handover", "stop", "that's it", etc.)
+
+1. **Update the task file**:
+   - Append a Session Log entry with: what was done, what's left, any blockers.
+   - Update Status. If completed → move file from `tasks/active/` to `tasks/done/`.
+2. **Create a handover file** at `.dev/handover/YYYY-MM-DD-<topic>.md`. Use the template at `.dev/HANDOVER_TEMPLATE.md`.
+3. **Briefly confirm** to the user that handover is written.
+
+### Session Log Entry Format
+
+Every Session Log entry in a task file must include the session ID header:
+
+```markdown
+### YYYY-MM-DD — <session-id>
+
+- What was done
+- What's left
+- Blockers
+```
+
+The session ID uniquely identifies the session and the contributor.
+
+### Task File Quick Reference
+
+```
+.dev/tasks/active/                ← project-wide / cross-epic tasks being worked on now
+.dev/tasks/backlog/                ← project-wide tasks defined but not started
+.dev/tasks/done/                   ← project-wide tasks completed
+.dev/epics/<slug>/                 ← per-epic dir (epic = customer/prospect or major workstream)
+.dev/epics/<slug>/epic.md          ← epic overview, manifest of sub-tasks, decisions log
+.dev/epics/<slug>/tasks/active/    ← in-flight sub-tasks for this epic
+.dev/epics/<slug>/tasks/backlog/   ← sub-tasks defined but not started
+.dev/epics/<slug>/tasks/done/      ← completed sub-tasks for this epic
+.dev/handover/                     ← session summaries (project-wide)
+.dev/TASK_TEMPLATE.md              ← copy this for new tasks (works for both top-level + epic-scoped)
+.dev/EPIC_TEMPLATE.md              ← copy this when starting a new epic
+.dev/HANDOVER_TEMPLATE.md          ← copy this on session-end
+docs/superpowers/plans/            ← step-by-step implementation plans (checkbox tasks)
+docs/superpowers/specs/            ← design docs (context, goals, architecture, decisions)
+```
+
+**Where do new tasks go?** If the work is part of an existing epic (a known customer/prospect with a `.dev/epics/<slug>/`), drop the task file in that epic's `tasks/backlog/` and link it from the epic's manifest table. Otherwise drop it in `.dev/tasks/backlog/`. **On session start**, also check active tasks under `.dev/epics/*/tasks/active/` — not just `.dev/tasks/active/`.
+
+**Epic-scoped task files** include two extra headers pointing back to the epic + plan:
+
+```markdown
+## Epic: <epic-slug>
+## Plan: docs/superpowers/plans/YYYY-MM-DD-<plan>.md
+## Plan Task: #N — <plan task title>
+```
+
+### Planning multi-step work
+
+For non-trivial multi-step work, author both a **spec** (`docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md`) and a **plan** (`docs/superpowers/plans/YYYY-MM-DD-<slug>.md`) before generating individual task files. Use the templates at `docs/superpowers/SPEC_TEMPLATE.md` and `docs/superpowers/PLAN_TEMPLATE.md`. The spec is "why and what"; the plan is "how, broken into checkbox steps". Each plan step becomes a task file.
+
+If the `superpowers` plugin is installed, prefer its `brainstorming` → `writing-plans` → `executing-plans` skill chain.
+
+### No PII in tracked files
+
+Never write the user's real name or email into any tracked file (task files, session logs, handovers, commit messages, code comments). Use the session-ID author hash (`a1b2c3d4`) instead. Repo absolute paths that contain `/Users/<username>/...` are unavoidable environment artifacts — those are fine; just don't introduce the name in *content* you write.
+
+For commit messages, use `Co-Authored-By: Claude Opus 4.X (<context>) <noreply@anthropic.com>`. Do not add a second human Co-Authored-By with the user's name.
+
+---
+
+## What This Is
+
+<PROJECT_DESCRIPTION>
+
+<!-- One short paragraph. Stack, purpose, who uses it.
+     Example: "Acme Widgets — a multi-tenant SaaS for managing widget inventory
+     across regional warehouses, built on Postgres + a Node API + a React UI." -->
+
+## Development Commands
+
+<DEV_COMMANDS>
+
+<!-- Replace this with build/run/test/lint/migrate commands. Group by component
+     (backend, frontend, db, workers, tests). Keep it copy-pasteable. -->
+
+## Architecture
+
+<!-- Add per-component notes as the project grows. Reference nested CLAUDE.md
+     files under specific directories where domain depth warrants it. -->
+
+## Important Gotchas
+
+<!-- Add over time. Examples:
+     - "Workers do NOT hot-reload — restart after code changes"
+     - "Three .env files exist, each loaded in a different runtime"
+     - "Column X is named Y, queries using the obvious name fail with error Z"
+     The point of this section is to save the *next* session from re-discovering
+     a footgun you already paid for. -->
