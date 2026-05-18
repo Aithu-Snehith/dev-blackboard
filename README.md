@@ -6,8 +6,53 @@
 [![Built for AI dev agents](https://img.shields.io/badge/built%20for-AI%20dev%20agents-orange)](#)
 
 ---
+## Quick start
 
-## The problem
+```bash
+# 1. Clone this repo
+git clone https://github.com/Aithu-Snehith/dev-blackboard.git
+cd dev-blackboard
+
+# 2. Copy it into your project as `.bootstrap/`
+cp -r . /path/to/your-project/.bootstrap
+
+# 3. Open Claude Code in your project
+cd /path/to/your-project
+claude
+
+# 4. Paste the prompt from SETUP_GUIDE.md — Claude does the rest
+```
+
+Full step-by-step (with the exact prompt to paste) lives in [`SETUP_GUIDE.md`](./SETUP_GUIDE.md).
+
+---
+## What gets installed in your project
+
+After the bootstrap runs, your project gains:
+
+```
+your-project/
+├── CLAUDE.md                          ← protocol: read blackboard on start, write on end
+├── .gitignore                         ← .remember/ added
+├── .dev/                              ← THE BLACKBOARD (tracked in git)
+│   ├── README.md
+│   ├── *_TEMPLATE.md                  ← copy these for new entries
+│   ├── tasks/{active,backlog,done}/   ← atomic units of work
+│   ├── epics/<slug>/                  ← major workstreams (customer, feature, initiative)
+│   │   ├── epic.md
+│   │   └── tasks/{active,backlog,done}/
+│   └── handover/YYYY-MM-DD-<topic>.md ← session-end records: what was done, what's left
+├── docs/superpowers/                  ← design artifacts (tracked in git)
+│   ├── specs/                         ← why & what (with decisions log)
+│   └── plans/                         ← how (with checkbox tasks)
+└── .remember/                         ← optional short-term session buffer (gitignored)
+```
+
+Every entry is signed (session ID), dated, and append-only. The folder structure encodes the state machine (`backlog → active → done`). The `CLAUDE.md` protocol makes every agent that touches the repo check the blackboard before acting and post to it after.
+
+---
+
+## Why we need this
 
 An AI coding agent like Claude Code, Cursor, Copilot, or Aider starts every session **blank**. It doesn't know:
 
@@ -32,53 +77,6 @@ The pattern dates back to Hayes-Roth and the Hearsay-II speech recognition syste
 **dev-blackboard makes that pattern concrete as files in your repo.** The `.dev/` folder *is* the blackboard. Tasks, handovers, specs, and decisions are entries posted to it. A short `CLAUDE.md` protocol enforces the read-on-start / write-on-end contract that any agent — human or AI — must follow.
 
 No daemon. No database. No API. Just markdown files you can grep, version, and review in a PR.
-
----
-
-## Quick start
-
-```bash
-# 1. Clone this repo
-git clone https://github.com/Aithu-Snehith/dev-blackboard.git
-cd dev-blackboard
-
-# 2. Copy it into your project as `.bootstrap/`
-cp -r . /path/to/your-project/.bootstrap
-
-# 3. Open Claude Code in your project
-cd /path/to/your-project
-claude
-
-# 4. Paste the prompt from SETUP_GUIDE.md — Claude does the rest
-```
-
-Full step-by-step (with the exact prompt to paste) lives in [`SETUP_GUIDE.md`](./SETUP_GUIDE.md).
-
----
-
-## What gets installed in your project
-
-After the bootstrap runs, your project gains:
-
-```
-your-project/
-├── CLAUDE.md                          ← protocol: read blackboard on start, write on end
-├── .gitignore                         ← .remember/ added
-├── .dev/                              ← THE BLACKBOARD (tracked in git)
-│   ├── README.md
-│   ├── *_TEMPLATE.md                  ← copy these for new entries
-│   ├── tasks/{active,backlog,done}/   ← atomic units of work
-│   ├── epics/<slug>/                  ← major workstreams (customer, feature, initiative)
-│   │   ├── epic.md
-│   │   └── tasks/{active,backlog,done}/
-│   └── handover/YYYY-MM-DD-<topic>.md ← session-end records: what was done, what's left
-├── docs/superpowers/                  ← design artifacts (tracked in git)
-│   ├── specs/                         ← why & what (with decisions log)
-│   └── plans/                         ← how (with checkbox tasks)
-└── .remember/                         ← optional short-term session buffer (gitignored)
-```
-
-Every entry is signed (session ID), dated, and append-only. The folder structure encodes the state machine (`backlog → active → done`). The `CLAUDE.md` protocol makes every agent that touches the repo check the blackboard before acting and post to it after.
 
 ---
 
